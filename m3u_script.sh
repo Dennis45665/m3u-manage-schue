@@ -40,4 +40,5 @@ fi
 echo "Starte M3U-Skript ..."
 "$VENV_PYTHON" "$SCRIPT"
 
+# Optional: venv deaktivieren
 deactivate
