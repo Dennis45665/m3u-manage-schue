@@ -37,8 +37,8 @@ path_m3u=m3u
 Nutze das mitgelieferte `m3u_script.sh` (Linux):
 
 ```bash
-chmod +x run_script.sh
-./run_script.sh
+chmod +x m3u_script.sh
+./m3u_script.sh
 ```
 
 Das Shellscript prüft, ob ein virtuelles Environment (`venv`) existiert. Falls nicht, wird es erstellt, die Abhängigkeiten aus `requirements.txt` installiert und danach das Script gestartet.
