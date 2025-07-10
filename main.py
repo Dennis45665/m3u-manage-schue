@@ -3,6 +3,7 @@ from src.create_m3u_with_movies import *
 from src.save_new_stream_m3u import *
 from src.save_new_movies_m3u import *
 from src.save_new_series_m3u import *
+from src.download_m3u import *
 from logger import logger, log_start, log_end
 from functions import *
 
@@ -14,8 +15,8 @@ def main ():
 
     # Download M3U File in /tmp von PythonPath
     # hier immer auskommentieren, damit ich nicht beim testen x mal downloade
-    m3u_base_filename = "tv_channels_nZtqNMXH.m3u"
-    # m3u_base_filename = download_m3u(m3u_url)
+    # m3u_base_filename = "tv_channels_nZtqNMXH.m3u"
+    m3u_base_filename = download_m3u(m3u_url)
 
     # Erstelle neue m3u nur mit Streams in /tmp
     m3u_streams_filename = create_m3u_with_stream(m3u_base_filename)
