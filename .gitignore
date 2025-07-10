@@ -1,0 +1,53 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+venv/
+env/
+.venv/
+.env/
+.env
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Logs und temporäre Dateien
+logs/
+tmp/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Python environment settings
+pip-wheel-metadata/
+*.egg
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# mypy
+.mypy_cache/
+
+# Pytest cache
+.pytest_cache/
+
+explained.md
