@@ -39,3 +39,5 @@ fi
 # 7. Python-Skript mit venv-Python ausführen
 echo "Starte M3U-Skript ..."
 "$VENV_PYTHON" "$SCRIPT"
+
+deactivate
