@@ -7,7 +7,7 @@ def save_new_movies_m3u(filename, path):
     logger.info("Check / Erstelle Filme")
     logger.info("=" * 30)
 
-    tmp_dir = Path(__file__).parent / "tmp"
+    tmp_dir = Path.cwd() / "tmp"
     input_file = tmp_dir / filename
     target_base_path = Path(path)
 

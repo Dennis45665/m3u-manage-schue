@@ -1,11 +1,12 @@
 import os
 from logger import logger
+from pathlib import Path
 
 def create_m3u_with_stream(filename):
     logger.info("Erstelle m3u mit NUR Streams..")
     new_filename = f"streams_{filename}"
 
-    tmp_dir = os.path.join(os.path.dirname(__file__), "tmp")
+    tmp_dir = Path.cwd() / "tmp"
     os.makedirs(tmp_dir, exist_ok=True)
 
     input_file = os.path.join(tmp_dir, filename)

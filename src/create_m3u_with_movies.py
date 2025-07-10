@@ -1,10 +1,11 @@
 import os
 from logger import logger
+from pathlib import Path
 
 def create_separate_m3u_files_movies_series(filename):
     logger.info("Erstelle m3u NUR mit Movies & Serien")
 
-    tmp_dir = os.path.join(os.path.dirname(__file__), "tmp")
+    tmp_dir = Path.cwd() / "tmp"
     os.makedirs(tmp_dir, exist_ok=True)
 
     input_file = os.path.join(tmp_dir, filename)

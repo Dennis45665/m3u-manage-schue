@@ -9,7 +9,7 @@ def save_new_stream_m3u(filename, path_m3u):
     logger.info("=" * 30)
 
     # Pfade vorbereiten
-    tmp_dir = Path(__file__).parent / "tmp"
+    tmp_dir = Path.cwd() / "tmp"
     input_file = tmp_dir / filename
     path_m3u = Path(path_m3u)
 

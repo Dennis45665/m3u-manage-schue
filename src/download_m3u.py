@@ -3,6 +3,7 @@ import os
 import requests
 from datetime import  datetime
 from logger import logger
+from pathlib import Path
 
 def delete_all_files_in_tmp(tmp_dir):
     for filename in os.listdir(tmp_dir):
@@ -21,7 +22,7 @@ def download_m3u(url):
     logger.info(f"Download M3U von URL: {url}")
 
     # /tmp vorhanden?
-    tmp_dir = os.path.join(os.path.dirname(__file__), "tmp")
+    tmp_dir = Path.cwd() / "tmp"
     os.makedirs(tmp_dir, exist_ok=True)
 
     # Datein inhalten? -> löschen
