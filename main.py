@@ -1,8 +1,8 @@
-from create_m3u_with_stream import *
-from create_m3u_with_movies import *
-from save_new_stream_m3u import *
-from save_new_movies_m3u import *
-from save_new_series_m3u import *
+from src.create_m3u_with_stream import *
+from src.create_m3u_with_movies import *
+from src.save_new_stream_m3u import *
+from src.save_new_movies_m3u import *
+from src.save_new_series_m3u import *
 from logger import logger, log_start, log_end
 from functions import *
 
