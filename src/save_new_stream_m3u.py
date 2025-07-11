@@ -14,11 +14,11 @@ def save_new_stream_m3u(filename, path_m3u):
     path_m3u = Path(path_m3u)
 
     # 1. Suche nach existierender Datei mit "streams_" Prefix
-    existing_file = next((f for f in path_m3u.glob("streams_*.m3u")), None)
+    existing_file = path_m3u / "iptv.m3u"
 
     # 2. Keine bestehende Datei gefunden → direkt speichern
-    if existing_file is None:
-        new_path = path_m3u / filename
+    if not existing_file.exists():
+        new_path = path_m3u / "iptv.m3u"
         shutil.copy2(input_file, new_path)
         logger.info(f"Neue Stream-Datei gespeichert: {new_path}")
         return
@@ -31,7 +31,7 @@ def save_new_stream_m3u(filename, path_m3u):
     if new_lines != old_lines:
         logger.info("Änderung erkannt – ersetze alte Datei.")
         existing_file.unlink()
-        new_path = path_m3u / filename
+        new_path = path_m3u / "iptv.m3u"
         shutil.copy2(input_file, new_path)
         logger.info(f"Neue Datei gespeichert: {new_path}")
     else:
