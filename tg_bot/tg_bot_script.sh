@@ -20,7 +20,7 @@ VENV_PYTHON="$VENV_DIR/bin/python"
 REQUIREMENTS="$PROJECT_DIR/requirements.txt"
 
 # Python-Skript (liegt im gleichen Ordner wie das .sh-Skript)
-SCRIPT="$SCRIPT_DIR/tg_bot_script.py"
+SCRIPT="$SCRIPT_DIR/main_tg.py"
 
 # Prüfen, ob venv existiert, ansonsten anlegen
 if [ ! -d "$VENV_DIR" ]; then
