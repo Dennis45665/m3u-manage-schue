@@ -39,5 +39,8 @@ else
 fi
 
 # Python-Skript mit venv-Python ausführen
+export PYTHONPATH="$PROJECT_DIR"
+
+# Python-Skript mit venv-Python ausführen
 echo "Starte TG-Jellyfin-Skript ..."
 "$VENV_PYTHON" "$SCRIPT"
