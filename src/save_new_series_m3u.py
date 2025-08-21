@@ -3,7 +3,7 @@ from pathlib import Path
 from functions import sanitize_filename
 from logger import logger
 
-def save_new_series_m3u(filename, path):
+def save_new_series_m3u(filename, path, blocklist):
     logger.info("=" * 30)
     logger.info("Check / Erstelle Serien")
     logger.info("=" * 30)
@@ -25,7 +25,7 @@ def save_new_series_m3u(filename, path):
             full_name = extinf_line[len("#EXTINF:-1,"):]
 
             # Serienname extrahieren OHNE Staffel/Episode für den Ordnernamen
-            staffel_match = re.search(r'\sS(\d+)\sE(\d+)$', full_name, re.IGNORECASE)
+            staffel_match = re.search(r'\sS(\d+)\sE(\d+)', full_name, re.IGNORECASE)
             if staffel_match:
                 serien_name = full_name[:staffel_match.start()].strip()
                 staffel_nummer = staffel_match.group(1)
@@ -33,7 +33,17 @@ def save_new_series_m3u(filename, path):
                 serien_name = full_name.strip()
                 staffel_nummer = None
 
-            serien_ordner = sanitize_filename(serien_name)
+            # Bereinigt den vollständigen Namen und den Seriennamen für die Verwendung als Dateinamen.
+            safe_full_name = sanitize_filename(full_name)
+            safe_serien_name = sanitize_filename(serien_name)
+
+            # Prüft, ob der bereinigte vollständige Name oder der bereinigte Serienname in der Blockliste enthalten ist.
+            if safe_full_name in blocklist or safe_serien_name in blocklist:
+                logger.info(f"Gesperrt: {full_name}")
+                i += 2
+                continue
+
+            serien_ordner = safe_serien_name
             if staffel_nummer is not None:
                 staffel_ordner = f"Staffel {int(staffel_nummer):02d}"
             else:
@@ -44,7 +54,7 @@ def save_new_series_m3u(filename, path):
             ziel_ordner.mkdir(parents=True, exist_ok=True)
 
             # Dateiname aus dem kompletten EXTINF-Namen, als .strm
-            dateiname_strm = sanitize_filename(full_name) + ".strm"
+            dateiname_strm = safe_full_name + ".strm"
             strm_datei = ziel_ordner / dateiname_strm
 
             if strm_datei.exists():

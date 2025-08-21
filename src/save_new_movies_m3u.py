@@ -2,7 +2,7 @@ from pathlib import Path
 from functions import sanitize_filename
 from logger import logger
 
-def save_new_movies_m3u(filename, path):
+def save_new_movies_m3u(filename, path, blocklist):
     logger.info("=" * 30)
     logger.info("Check / Erstelle Filme")
     logger.info("=" * 30)
@@ -25,7 +25,14 @@ def save_new_movies_m3u(filename, path):
             i += 2
             continue
 
+        # Bereinigt den Titel für die Verwendung als Dateiname.
         safe_title = sanitize_filename(title)
+
+        # Prüft, ob der bereinigte Titel in der Blockliste enthalten ist.
+        if safe_title in blocklist:
+            logger.info(f"Gesperrt: {title}")
+            i += 2
+            continue
         folder_path = target_base_path / safe_title
         folder_path.mkdir(parents=True, exist_ok=True)
 

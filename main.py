@@ -11,7 +11,10 @@ def main ():
     # Start
     log_start()
     # Lade Config Daten
-    m3u_url, path_movie, path_serien, path_m3u = load_config()
+    m3u_url, path_movie, path_serien, path_m3u, blockliste_path = load_config()
+
+    # Lade die Blockliste, um Filme und Serien auszuschließen.
+    blocklist = load_blocklist(blockliste_path)
 
     # Download M3U File in /tmp von PythonPath
     # hier immer auskommentieren, damit ich nicht beim testen x mal downloade
@@ -27,9 +30,9 @@ def main ():
     # check / erstelle m3u stream file
     save_new_stream_m3u(m3u_streams_filename, path_m3u)
     # check / erstelle movies .strm
-    save_new_movies_m3u(m3u_movies_filename, path_movie)
+    save_new_movies_m3u(m3u_movies_filename, path_movie, blocklist)
     # check / erstelle serien .strm
-    save_new_series_m3u(m3u_series_filename, path_serien)
+    save_new_series_m3u(m3u_series_filename, path_serien, blocklist)
     # Done
     log_end()
 
