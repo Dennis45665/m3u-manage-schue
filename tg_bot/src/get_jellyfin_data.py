@@ -1,6 +1,7 @@
 import requests
 from datetime import datetime, timedelta, timezone
-from tg_bot.logger import tg_logger
+from ..logger import tg_logger
+import json
 
 def get_jellyfin_data(jellyfin_url, jellyfin_api_key, hours=1):
     tg_logger.info("Hole & Erstelle Jellyfin Data")
@@ -27,6 +28,7 @@ def get_jellyfin_data(jellyfin_url, jellyfin_api_key, hours=1):
         r = requests.get(base_items_url, headers=headers, params=item_params)
         r.raise_for_status()
         items = r.json().get("Items", [])
+        tg_logger.info(f"Jellyfin API response: {json.dumps(items, indent=2)}")
     except Exception as e:
         tg_logger.info("Fehler beim API Call Filme/Serien/Episoden", e)
         items = []

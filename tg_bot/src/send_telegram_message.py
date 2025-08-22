@@ -1,8 +1,11 @@
 import time
-
+import json
 from tg_bot.logger import tg_logger
 import requests
 from pathlib import Path
+
+# Pfad zur Datei, in der die gesendeten IDs gespeichert werden
+SENT_ITEMS_FILE = Path(__file__).parent.parent / "tmp" / "sent_items.json"
 
 def send_message(tg_bot_token, tg_chat_id, text):
     tg_logger.info("Sende TG Message...")
@@ -16,7 +19,6 @@ def send_message(tg_bot_token, tg_chat_id, text):
                 "parse_mode": "Markdown"
             }
         )
-        print(response.json())
         if response.status_code != 200:
             tg_logger.error(f"Telegram API Fehler {response.status_code}: {response.text}")
         else:
@@ -25,43 +27,11 @@ def send_message(tg_bot_token, tg_chat_id, text):
                 tg_logger.error(f"Telegram-Fehlermeldung: {json_response}")
             else:
                 tg_logger.info("Nachricht erfolgreich gesendet.")
+                return True
 
     except requests.exceptions.RequestException as e:
         tg_logger.exception(f"Fehler beim Senden der Nachricht: {e}")
-
-
-
-def format_telegram_message_old(data):
-    lines = ["# 🚀 Neue Medien in SurkFlix 🚀"]
-
-    if data.get("movies"):
-        lines.append("\n## 🎬 Filme")
-        for m in data["movies"]:
-            lines.append(f"- {m['Name']}")
-
-    if data.get("series"):
-        lines.append("\n## 📺 Serien")
-        for s in data["series"]:
-            lines.append(f"- {s['Name']}")
-
-    if data.get("episodes"):
-        lines.append("\n## 📼 Neue Episoden")
-        for e in data["episodes"]:
-            series = e["SeriesName"]
-            season = e["SeasonName"]
-            ep_range = e["EpisodeRange"]
-            lines.append(f"- {series} – {season} ({ep_range})")
-
-    if data.get("livetv"):  # Jetzt wieder aktiv!
-        lines.append("\n## 📡 Neue Live-TV-Kanäle")
-        for c in data["livetv"]:
-            lines.append(f"- {c['Name']}")
-
-    #return "\n".join(lines)
-    # In Datei speichern
-    filepath = "test.md"
-    with open(filepath, "w", encoding="utf-8") as f:
-        f.write("\n".join(lines))
+    return False
 
 
 def format_telegram_message(data, max_length=4000):
@@ -149,16 +119,96 @@ def format_telegram_message(data, max_length=4000):
     return messages
 
 
-def send_telegram_message(tg_bot_token, tg_chat_id, data):
+def send_telegram_message(tg_bot_token, tg_chat_id, data, unfiltered_data):
+    """
+    Formatiert die Daten und sendet sie als eine oder mehrere Telegram-Nachrichten.
+    Speichert die IDs der gesendeten Medien, um Duplikate zu vermeiden.
+
+    Args:
+        tg_bot_token (str): Der Token für den Telegram-Bot.
+        tg_chat_id (str): Die ID des Telegram-Chats, an den die Nachrichten gesendet werden sollen.
+        data (dict): Die zu sendenden Daten, gefiltert nach neuen Medien.
+        unfiltered_data (dict): Die ursprünglichen, ungefilterten Daten von Jellyfin.
+    """
     tg_logger.info("Start - Sende TG Message mit Jellyfin Data")
 
     # Telegram message formatieren
     messages = format_telegram_message(data)
-
+    
+    all_sent_successfully = True
     # Einzelne Nachrichten nacheinander senden
     for msg in messages:
-        send_message(tg_bot_token, tg_chat_id, msg)
+        if not send_message(tg_bot_token, tg_chat_id, msg):
+            all_sent_successfully = False
+            break  # Stop sending if one message fails
         time.sleep(5)
+
+    if all_sent_successfully:
+        save_last_run_data(unfiltered_data)
+        tg_logger.info("Alle Nachrichten erfolgreich gesendet und Daten gespeichert.")
+    else:
+        tg_logger.error("Nicht alle Nachrichten konnten gesendet werden. Daten werden nicht gespeichert.")
 
     tg_logger.info("Sende TG Message mit Jellyfin Data - Done")
 
+
+def save_last_run_data(data):
+    """
+    Speichert die IDs der gesendeten Medien in einer JSON-Datei, um zukünftige Duplikate zu verhindern.
+
+    Args:
+        data (dict): Die Daten der Medien, deren IDs gespeichert werden sollen.
+    """
+    try:
+        # Lade vorhandene Daten
+        if SENT_ITEMS_FILE.exists():
+            with open(SENT_ITEMS_FILE, "r", encoding="utf-8") as f:
+                sent_data = json.load(f)
+        else:
+            sent_data = {"movies": [], "series": [], "episodes": []}
+
+        # Füge neue IDs hinzu
+        for key in ["movies", "series", "episodes"]:
+            if key in data:
+                for item in data[key]:
+                    if item["Id"] not in sent_data[key]:
+                        sent_data[key].append(item["Id"])
+        
+        # Speichere die aktualisierten Daten
+        SENT_ITEMS_FILE.parent.mkdir(exist_ok=True)
+        with open(SENT_ITEMS_FILE, "w", encoding="utf-8") as f:
+            json.dump(sent_data, f, indent=4)
+            
+        tg_logger.info(f"Gesendete Daten in {SENT_ITEMS_FILE} gespeichert.")
+
+    except Exception as e:
+        tg_logger.exception(f"Fehler beim Speichern der Daten: {e}")
+
+
+def has_new_data(current_data):
+    """
+    Vergleicht die aktuellen Daten von Jellyfin mit den bereits gesendeten IDs.
+
+    Args:
+        current_data (dict): Die aktuellen Daten von Jellyfin.
+
+    Returns:
+        dict: Ein Dictionary, das nur die neuen, noch nicht gesendeten Medien enthält.
+    """
+    if not SENT_ITEMS_FILE.exists():
+        return current_data # Wenn keine Datei existiert, sind alle Daten neu
+
+    try:
+        with open(SENT_ITEMS_FILE, "r", encoding="utf-8") as f:
+            sent_ids = json.load(f)
+    except (json.JSONDecodeError, FileNotFoundError):
+        sent_ids = {"movies": [], "series": [], "episodes": []}
+
+    new_data = {}
+    for key in ["movies", "series", "episodes"]:
+        if key in current_data:
+            new_items = [item for item in current_data[key] if item["Id"] not in sent_ids.get(key, [])]
+            if new_items:
+                new_data[key] = new_items
+
+    return new_data

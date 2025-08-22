@@ -1,7 +1,6 @@
-import os
 import configparser
 import re
-from tg_bot.logger import tg_logger
+from ..logger import tg_logger
 from dotenv import load_dotenv
 from pathlib import Path
 
