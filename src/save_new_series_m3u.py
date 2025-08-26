@@ -2,6 +2,7 @@ import re
 from pathlib import Path
 from functions import sanitize_filename
 from logger import logger
+import os
 
 def save_new_series_m3u(filename, path, blocklist):
     logger.info("=" * 30)
@@ -11,6 +12,10 @@ def save_new_series_m3u(filename, path, blocklist):
     tmp_dir = Path.cwd() / "tmp"
     input_file = tmp_dir / filename
     target_base_path = Path(path)
+
+    # 1. Erfasse alle vorhandenen .strm-Dateien
+    existing_strm_files = set(target_base_path.rglob("*.strm"))
+    processed_strm_files = set()
 
     # M3U-Datei zeilenweise lesen
     lines = input_file.read_text(encoding='utf-8', errors='ignore').splitlines()
@@ -56,6 +61,7 @@ def save_new_series_m3u(filename, path, blocklist):
             # Dateiname aus dem kompletten EXTINF-Namen, als .strm
             dateiname_strm = safe_full_name + ".strm"
             strm_datei = ziel_ordner / dateiname_strm
+            processed_strm_files.add(strm_datei)
 
             if strm_datei.exists():
                 bestehender_link = strm_datei.read_text(encoding='utf-8', errors='ignore').strip()
@@ -70,5 +76,27 @@ def save_new_series_m3u(filename, path, blocklist):
                 strm_datei.write_text(url_line + "\n", encoding='utf-8')
 
         i += 2
+
+    # 3. Vergleiche und lösche veraltete Dateien
+    strm_files_to_delete = existing_strm_files - processed_strm_files
+    for file_path in strm_files_to_delete:
+        try:
+            season_dir = file_path.parent
+            series_dir = season_dir.parent
+            file_path.unlink()
+            logger.info(f"Gelöscht: {file_path}")
+
+            # 4. Prüfe und lösche leeres Staffel-Verzeichnis
+            if not any(season_dir.iterdir()):
+                season_dir.rmdir()
+                logger.info(f"Leeres Staffel-Verzeichnis gelöscht: {season_dir}")
+
+                # 5. Prüfe und lösche leeres Serien-Verzeichnis
+                if not any(series_dir.iterdir()):
+                    series_dir.rmdir()
+                    logger.info(f"Leeres Serien-Verzeichnis gelöscht: {series_dir}")
+
+        except OSError as e:
+            logger.info(f"Fehler beim Löschen von {file_path} oder dem Verzeichnis: {e}")
 
     logger.info("Fertig mit Serien-Verarbeitung.")

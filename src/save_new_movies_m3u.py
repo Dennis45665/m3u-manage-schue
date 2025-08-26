@@ -1,6 +1,7 @@
 from pathlib import Path
 from functions import sanitize_filename
 from logger import logger
+import os
 
 def save_new_movies_m3u(filename, path, blocklist):
     logger.info("=" * 30)
@@ -10,6 +11,10 @@ def save_new_movies_m3u(filename, path, blocklist):
     tmp_dir = Path.cwd() / "tmp"
     input_file = tmp_dir / filename
     target_base_path = Path(path)
+
+    # 1. Erfasse alle vorhandenen .strm-Dateien
+    existing_strm_files = set(target_base_path.rglob("*.strm"))
+    processed_strm_files = set()
 
     # M3U-Datei lesen
     lines = input_file.read_text(encoding='utf-8', errors='ignore').splitlines()
@@ -37,6 +42,7 @@ def save_new_movies_m3u(filename, path, blocklist):
         folder_path.mkdir(parents=True, exist_ok=True)
 
         file_path = folder_path / f"{safe_title}.strm"
+        processed_strm_files.add(file_path)
 
         # Wenn Datei nicht existiert → erstellen
         if not file_path.exists():
@@ -54,3 +60,19 @@ def save_new_movies_m3u(filename, path, blocklist):
                 logger.info(f"Unverändert: {file_path}")
 
         i += 2  # nächstes Paar
+
+    # 3. Vergleiche und lösche veraltete Dateien
+    strm_files_to_delete = existing_strm_files - processed_strm_files
+    for file_path in strm_files_to_delete:
+        try:
+            parent_dir = file_path.parent
+            file_path.unlink()
+            logger.info(f"Gelöscht: {file_path}")
+
+            # 4. Prüfe und lösche leeres Verzeichnis
+            if not any(parent_dir.iterdir()):
+                parent_dir.rmdir()
+                logger.info(f"Leeres Verzeichnis gelöscht: {parent_dir}")
+
+        except OSError as e:
+            logger.error(f"Fehler beim Löschen von {file_path} oder dem Verzeichnis: {e}")
