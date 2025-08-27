@@ -1,4 +1,5 @@
 import configparser
+import os  # Änderung: os für getenv hinzugefügt
 import re
 from ..logger import tg_logger
 from dotenv import load_dotenv
@@ -35,10 +36,10 @@ def load_config():
 
         tg_logger.info("Config aus CONFIG.ini geladen")
 
+    # Änderung: Sensible Daten nicht mehr vollständig loggen,
+    # stattdessen nur anzeigen, ob TG-Bot-Daten vorhanden sind.
     tg_logger.info(f"Jellyfin URL: {jellyfin_url}")
-    tg_logger.info(f"Jellyfin API KEY: {jellyfin_api_key}")
-    tg_logger.info(f"Jellyfin Schedule New Film Series: {hours_new_film_series}")
-    tg_logger.info(f"TG Bot Token: {tg_bot_token}")
-    tg_logger.info(f"TG Chat ID: {tg_chat_id}")
+    tg_logger.info(f"Jellyfin Schedule New Film Series (hours): {hours_new_film_series}")
+    tg_logger.info(f"TG Bot konfiguriert: token={'JA' if tg_bot_token else 'NEIN'}, chat_id={'JA' if tg_chat_id else 'NEIN'}")
 
     return jellyfin_url, jellyfin_api_key, tg_bot_token, tg_chat_id, hours_new_film_series

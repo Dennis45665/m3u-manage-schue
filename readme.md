@@ -57,6 +57,54 @@ logs/2025-07-10_15-30-00_m3u_log.log
 
 ---
 
+## Telegram Bot (tg_bot)
+
+- Zweck: Prüft neue Filme/Serien/Episoden seit dem letzten Lauf und sendet eine Telegram-Nachricht.
+- Kein Zeitfenster: Es wird immer gegen den letzten vollständigen Snapshot verglichen.
+- Erster Start: Erstellt nur den Snapshot, sendet keine Nachrichten.
+- Dry-Run: Falls Telegram-Config fehlt, wird die Nachricht als Vorschau im Terminal ausgegeben (kein Versand).
+
+### Konfiguration
+
+- `.env` in der Projektwurzel oder `CONFIG.ini` verwenden.
+
+Beispiel (`CONFIG.ini`):
+
+```ini
+[JELLYFIN_API]
+jellyfin_url = https://dein-jellyfin
+jellyfin_api_key = <API_KEY>
+
+[TG_BOT]
+tg_bot_token = <BOT_TOKEN>
+tg_chat_id = <CHAT_ID>
+```
+
+Hinweis: Wenn `tg_bot_token` oder `tg_chat_id` fehlen, läuft der Bot im Dry-Run und zeigt die Nachricht im Terminal.
+
+### Ausführen
+
+```bash
+cd tg_bot
+chmod +x tg_bot_script.sh
+./tg_bot_script.sh
+```
+
+- Das Script ermittelt den Projektpfad automatisch und nutzt `venv/bin/python`, ansonsten `python3`.
+- Alternativ aus der Projektwurzel: `python -m tg_bot.main_tg`.
+
+### Snapshot & Vergleich
+
+- Snapshot-Datei: `tg_bot/tmp/jellyfin_snapshot.json`
+- Bei jedem Lauf werden alle Jellyfin-Items (Filme, Serien, Episoden) geladen und mit dem Snapshot verglichen.
+- Resultat: Nur neue Filme/Serien werden gemeldet. Serien werden nicht als „neu“ gemeldet, wenn nur neue Staffeln/Episoden hinzugekommen sind; neue Episoden werden gruppiert gemeldet (z. B. `S02, E01–E03`).
+
+### Ausgabe/Logging (tg_bot)
+
+- Konsole: Alle Schritte und ggf. Nachrichten-Vorschau.
+- Logdateien: `tg_bot/logs/*_tg_bot_log.log` (max. 10 Dateien; Rotation automatisch).
+
+
 ## Cleaner: Duplikate & Identifizierung
 
 - Scannt Jellyfin und erkennt Duplikate zwischen M3U-Inhalten und regulären Inhalten.

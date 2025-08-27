@@ -7,7 +7,16 @@ from pathlib import Path
 # Pfad zur Datei, in der die gesendeten IDs gespeichert werden
 SENT_ITEMS_FILE = Path(__file__).parent.parent / "tmp" / "sent_items.json"
 
-def send_message(tg_bot_token, tg_chat_id, text):
+def send_message(tg_bot_token, tg_chat_id, text, dry_run=False):
+    """
+    Änderung: Unterstützt Dry-Run. Wenn keine TG-Daten vorhanden sind oder
+    dry_run=True, wird die Nachricht im Terminal als Vorschau ausgegeben.
+    """
+    if dry_run or not tg_bot_token or not tg_chat_id:
+        tg_logger.info("[DRY-RUN] Würde Telegram-Nachricht senden:")
+        print("\n--- Telegram Nachricht (Vorschau) ---\n" + text + "\n--- Ende ---\n")
+        return True
+
     tg_logger.info("Sende TG Message...")
 
     try:
@@ -119,7 +128,7 @@ def format_telegram_message(data, max_length=4000):
     return messages
 
 
-def send_telegram_message(tg_bot_token, tg_chat_id, data, unfiltered_data):
+def send_telegram_message(tg_bot_token, tg_chat_id, data, unfiltered_data, *, dry_run=False, save_sent_ids=True):
     """
     Formatiert die Daten und sendet sie als eine oder mehrere Telegram-Nachrichten.
     Speichert die IDs der gesendeten Medien, um Duplikate zu vermeiden.
@@ -130,6 +139,9 @@ def send_telegram_message(tg_bot_token, tg_chat_id, data, unfiltered_data):
         data (dict): Die zu sendenden Daten, gefiltert nach neuen Medien.
         unfiltered_data (dict): Die ursprünglichen, ungefilterten Daten von Jellyfin.
     """
+    # Änderung: Parameter 'dry_run' (Vorschau) und 'save_sent_ids' (optional)
+    # hinzugefügt, um Versandsimulation zu ermöglichen und ID-Speicherungen
+    # hier zu überspringen, da Dedupe nun via Snapshot erfolgt.
     tg_logger.info("Start - Sende TG Message mit Jellyfin Data")
 
     # Telegram message formatieren
@@ -138,12 +150,13 @@ def send_telegram_message(tg_bot_token, tg_chat_id, data, unfiltered_data):
     all_sent_successfully = True
     # Einzelne Nachrichten nacheinander senden
     for msg in messages:
-        if not send_message(tg_bot_token, tg_chat_id, msg):
+        if not send_message(tg_bot_token, tg_chat_id, msg, dry_run=dry_run):
             all_sent_successfully = False
             break  # Stop sending if one message fails
         time.sleep(5)
 
-    if all_sent_successfully:
+    # Änderung: Gesendete IDs nur speichern, wenn gewünscht und kein Dry-Run.
+    if all_sent_successfully and save_sent_ids and not dry_run:
         save_last_run_data(unfiltered_data)
         tg_logger.info("Alle Nachrichten erfolgreich gesendet und Daten gespeichert.")
     else:

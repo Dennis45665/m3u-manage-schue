@@ -1,14 +1,14 @@
 import requests
-from datetime import datetime, timedelta, timezone
 from ..logger import tg_logger
 import json
 
-def get_jellyfin_data(jellyfin_url, jellyfin_api_key, hours=1):
-    tg_logger.info("Hole & Erstelle Jellyfin Data")
-    hours = float(hours)
-    now = datetime.now(timezone.utc)
-    min_date = now - timedelta(hours=hours)
-    min_date_str = min_date.isoformat()
+def get_jellyfin_data(jellyfin_url, jellyfin_api_key):
+    """
+    Änderung: Kein Zeitfenster mehr. Es werden alle Items geladen und mit dem
+    vorherigen Snapshot verglichen. Zusätzliche Felder (SeriesId, etc.) für
+    korrekte Zuordnung und spätere Gruppierung wurden ergänzt.
+    """
+    tg_logger.info("Hole & Erstelle Jellyfin Data (ohne Zeitfenster)")
 
     headers = {
         "X-Emby-Token": jellyfin_api_key
@@ -18,10 +18,11 @@ def get_jellyfin_data(jellyfin_url, jellyfin_api_key, hours=1):
     item_params = {
         "IncludeItemTypes": "Series,Movie,Episode",
         "Recursive": "true",
-        "Fields": "DateCreated,Path",
+        # Änderung: Zusatzfelder erweitert, damit Serien/Episoden korrekt
+        # zugeordnet und gruppiert werden können (SeriesId u.a.).
+        "Fields": "DateCreated,Path,SeriesName,SeriesId,SeasonName,IndexNumber,ParentIndexNumber,ProductionYear,Overview",
         "SortBy": "DateCreated",
         "SortOrder": "Descending",
-        "MinDateCreated": min_date_str
     }
 
     try:
@@ -30,7 +31,8 @@ def get_jellyfin_data(jellyfin_url, jellyfin_api_key, hours=1):
         items = r.json().get("Items", [])
         tg_logger.info(f"Jellyfin API response: {json.dumps(items, indent=2)}")
     except Exception as e:
-        tg_logger.info("Fehler beim API Call Filme/Serien/Episoden", e)
+        # Änderung: exception() für Stacktrace im Log
+        tg_logger.exception("Fehler beim API Call Filme/Serien/Episoden")
         items = []
 
     # Aufteilen nach Typ
@@ -58,7 +60,8 @@ def get_jellyfin_data(jellyfin_url, jellyfin_api_key, hours=1):
         channels = r2.json().get("Items", [])
         data["livetv"] = channels
     except Exception as e:
-        tg_logger.info("Fehler beim API Call Live-TV", e)
+        # Änderung: exception() für Stacktrace im Log
+        tg_logger.exception("Fehler beim API Call Live-TV")
 
     tg_logger.info("Hole & Erstelle Jellyfin Data - Done")
     return data

@@ -1,4 +1,5 @@
 import logging
+import sys  # Änderung: Konsolen-Logging über stdout hinzufügen
 from pathlib import Path
 from datetime import datetime
 
@@ -20,15 +21,24 @@ def get_log_file():
 log_file = get_log_file()
 cleanup_logs()
 
-logging.basicConfig(
-    filename=log_file,
-    level=logging.INFO,
-    format='[%(asctime)s] %(levelname)s: %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-    encoding='utf-8'
-)
-
 tg_logger = logging.getLogger("tg_logger")
+tg_logger.setLevel(logging.INFO)
+
+# Änderung: Eigenes Logging-Setup mit File- und Console-Handler,
+# statt nur basicConfig mit Datei.
+file_handler = logging.FileHandler(log_file, encoding='utf-8')
+file_handler.setLevel(logging.INFO)
+formatter = logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+file_handler.setFormatter(formatter)
+tg_logger.addHandler(file_handler)
+
+# Console Handler (direkte Ausgabe in Terminal)
+console_handler = logging.StreamHandler(stream=sys.stdout)
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(formatter)
+tg_logger.addHandler(console_handler)
+
+tg_logger.propagate = False
 
 
 def log_start():
