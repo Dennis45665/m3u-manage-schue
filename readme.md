@@ -69,6 +69,27 @@ Hinweise für Cron:
 - Es nutzt `venv/bin/python`; falls kein venv existiert, wird es automatisch erstellt und `requirements.txt` installiert.
 - Ausgabe geht ins angegebene Log (`/var/log/m3u-manage.log`) und zusätzlich in `logs/*_m3u_log.log` im Projekt.
 
+### .strm-Cleanup-Skript
+
+Separates Skript zum Aufräumen leerer Ordner gemäß Schema:
+- Filme: Löscht Filmordner, wenn darin keine `.strm`-Datei mehr existiert.
+- Serien: Löscht Staffelordner ohne `.strm`; wenn keine Staffelordner mehr übrig, wird der Serienordner gelöscht.
+
+Ausführen:
+
+```bash
+chmod +x cleanup_strm.sh
+./cleanup_strm.sh
+```
+
+Cron-Beispiel (täglich um 03:15 Uhr):
+
+```cron
+15 3 * * * /pfad/zu/deinem/projekt/cleanup_strm.sh >> /var/log/m3u-cleanup.log 2>&1
+```
+
+Das Cleanup-Skript nutzt die gleichen Pfade aus `CONFIG.ini`/`.env` wie das M3U-Skript.
+
 ---
 
 ## Logging
