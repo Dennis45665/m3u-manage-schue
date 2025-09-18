@@ -1,5 +1,6 @@
 import re
 from pathlib import Path
+import shutil
 from functions import sanitize_filename
 from logger import logger
 import os
@@ -131,26 +132,55 @@ def save_new_series_m3u(filename, path, blocklist):
 
     # 3. Vergleiche und lösche veraltete Dateien
     strm_files_to_delete = existing_strm_files - processed_strm_files
+
+    # Vorab: Season- und Serien-Gruppierung der vorhandenen Dateien (vor Löschung)
+    from collections import defaultdict
+    season_to_files = defaultdict(set)
+    series_to_seasons = defaultdict(set)
+    for f in existing_strm_files:
+        season_dir = f.parent
+        series_dir = season_dir.parent
+        season_to_files[season_dir].add(f)
+        series_to_seasons[series_dir].add(season_dir)
+
+    # Gruppiere, welche Dateien pro Season gelöscht werden
+    season_to_delete = defaultdict(set)
+    for f in strm_files_to_delete:
+        season_to_delete[f.parent].add(f)
+
+    # 3a) Einzelne Dateien löschen
     for file_path in strm_files_to_delete:
         try:
-            season_dir = file_path.parent
-            series_dir = season_dir.parent
-            file_path.unlink()
-            logger.info(f"Gelöscht: {file_path}")
+            if file_path.exists():
+                file_path.unlink()
+                logger.info(f"Gelöscht: {file_path}")
             deleted_titles.append(file_path.stem)
-
-            # 4. Prüfe und lösche leeres Staffel-Verzeichnis
-            if not any(season_dir.iterdir()):
-                season_dir.rmdir()
-                logger.info(f"Leeres Staffel-Verzeichnis gelöscht: {season_dir}")
-
-                # 5. Prüfe und lösche leeres Serien-Verzeichnis
-                if not any(series_dir.iterdir()):
-                    series_dir.rmdir()
-                    logger.info(f"Leeres Serien-Verzeichnis gelöscht: {series_dir}")
-
         except OSError as e:
-            logger.info(f"Fehler beim Löschen von {file_path} oder dem Verzeichnis: {e}")
+            logger.info(f"Fehler beim Löschen von {file_path}: {e}")
+
+    # 3b) Ganze Staffeln löschen, wenn alle Episoden betroffen sind
+    seasons_removed = set()
+    for season_dir, del_set in season_to_delete.items():
+        all_files_in_season = season_to_files.get(season_dir, set())
+        if del_set and del_set == all_files_in_season:
+            # komplette Staffel löschen (rekursiv), inkl. NFO/JPG etc.
+            try:
+                if season_dir.exists():
+                    shutil.rmtree(season_dir)
+                    logger.info(f"Staffel-Ordner gelöscht: {season_dir}")
+                    seasons_removed.add(season_dir)
+            except OSError as e:
+                logger.info(f"Fehler beim Löschen des Staffel-Ordners {season_dir}: {e}")
+
+    # 3c) Ganze Serien löschen, wenn alle Staffeln entfernt wurden
+    for series_dir, seasons in series_to_seasons.items():
+        if seasons and seasons.issubset(seasons_removed):
+            try:
+                if series_dir.exists():
+                    shutil.rmtree(series_dir)
+                    logger.info(f"Serien-Ordner gelöscht: {series_dir}")
+            except OSError as e:
+                logger.info(f"Fehler beim Löschen des Serien-Ordners {series_dir}: {e}")
 
     logger.info("Fertig mit Serien-Verarbeitung.")
     return created_titles, deleted_titles

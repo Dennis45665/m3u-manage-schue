@@ -11,6 +11,7 @@ Dieses Skript verarbeitet eine M3U-Datei, die Streams, Filme und Serien enthält
 - Nicht erreichbare Einträge werden protokolliert und in `tmp/offline.json` gesammelt.
 - Für gültige Einträge wird ein Verzeichnis mit einem sicheren Namen erstellt und eine `.strm`-Datei mit dem Stream-URL abgelegt.
 - Bestehende `.strm`-Dateien werden nur aktualisiert, wenn sich der Stream-URL ändert.
+ - Löschregeln: Bei Filmen wird beim Entfernen die gesamte Ordnerstruktur des Films gelöscht. Bei Serien werden Episoden-Dateien gelöscht; ist eine Staffel vollständig betroffen, wird der gesamte Staffelordner gelöscht; sind alle Staffeln betroffen, wird der gesamte Serienordner gelöscht.
 
 ---
 

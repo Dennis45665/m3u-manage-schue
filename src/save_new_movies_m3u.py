@@ -1,4 +1,5 @@
 from pathlib import Path
+import shutil
 from functions import sanitize_filename
 from logger import logger
 import os
@@ -106,14 +107,16 @@ def save_new_movies_m3u(filename, path, blocklist):
     for file_path in strm_files_to_delete:
         try:
             parent_dir = file_path.parent
-            file_path.unlink()
-            logger.info(f"Gelöscht: {file_path}")
+            # Datei löschen
+            if file_path.exists():
+                file_path.unlink()
+                logger.info(f"Gelöscht: {file_path}")
             deleted_titles.append(file_path.stem)
 
-            # 4. Prüfe und lösche leeres Verzeichnis
-            if not any(parent_dir.iterdir()):
-                parent_dir.rmdir()
-                logger.info(f"Leeres Verzeichnis gelöscht: {parent_dir}")
+            # Kompletten Film-Ordner entfernen (inkl. evtl. verbleibender Dateien)
+            if parent_dir.exists():
+                shutil.rmtree(parent_dir)
+                logger.info(f"Film-Ordner gelöscht: {parent_dir}")
 
         except OSError as e:
             logger.error(f"Fehler beim Löschen von {file_path} oder dem Verzeichnis: {e}")

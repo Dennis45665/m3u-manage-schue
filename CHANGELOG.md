@@ -15,6 +15,7 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 - Hauptlauf: Am Ende wird `tmp/offline.json` geschrieben
 - Telegram-Bot: Unterdrückt „neue“ Titel, die in `tmp/offline.json` stehen; Offline-Liste wird NICHT gepostet
 - Serien-Offlines: Serienname wird sauber ohne Sxx/Eyy gespeichert für zuverlässigen Abgleich
+ - Löschregeln: Bei Filmen wird der gesamte Filmordner entfernt; bei Serien werden komplette Staffeln bzw. ganze Serien rekursiv gelöscht, wenn alle enthaltenen Episoden entfernt werden
 
 ## 0.2.0 — 2025-08-27
 
