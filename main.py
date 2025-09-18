@@ -1,3 +1,5 @@
+import os
+from pathlib import Path
 from src.create_m3u_with_stream import *
 from src.create_m3u_with_movies import *
 from src.save_new_stream_m3u import *
@@ -6,6 +8,7 @@ from src.save_new_series_m3u import *
 from src.download_m3u import *
 from logger import logger, log_start, log_end
 from functions import *
+from src.offline_tracker import dump_offline_json
 
 def main ():
     # Start
@@ -63,9 +66,32 @@ def main ():
     # check / erstelle m3u stream file
     save_new_stream_m3u(m3u_streams_filename, path_m3u)
     # check / erstelle movies .strm
-    save_new_movies_m3u(m3u_movies_filename, path_movie, blocklist)
+    movies_created, movies_deleted = save_new_movies_m3u(m3u_movies_filename, path_movie, blocklist)
     # check / erstelle serien .strm
-    save_new_series_m3u(m3u_series_filename, path_serien, blocklist)
+    series_created, series_deleted = save_new_series_m3u(m3u_series_filename, path_serien, blocklist)
+
+    # Zusammenfassung am Ende
+    total_created = len(movies_created) + len(series_created)
+    total_deleted = len(movies_deleted) + len(series_deleted)
+    logger.info("=" * 30)
+    logger.info("Zusammenfassung Änderungen:")
+    logger.info(f"Neu: Filme {len(movies_created)}, Serien {len(series_created)} (gesamt {total_created})")
+    logger.info(f"Gelöscht: Filme {len(movies_deleted)}, Serien {len(series_deleted)} (gesamt {total_deleted})")
+
+    if movies_created:
+        logger.info("Neu (Filme): " + "; ".join(movies_created))
+    if series_created:
+        logger.info("Neu (Serien): " + "; ".join(series_created))
+    if movies_deleted:
+        logger.info("Gelöscht (Filme): " + "; ".join(movies_deleted))
+    if series_deleted:
+        logger.info("Gelöscht (Serien): " + "; ".join(series_deleted))
+    # Offline-Links speichern
+    try:
+        offline_count = dump_offline_json(Path.cwd() / "tmp" / "offline.json")
+        logger.info(f"Offline-Einträge gespeichert: {offline_count} in offline.json")
+    except Exception as e:
+        logger.info(f"Konnte offline.json nicht schreiben: {e}")
     # Done
     log_end()
 

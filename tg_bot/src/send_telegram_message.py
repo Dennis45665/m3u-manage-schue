@@ -43,7 +43,7 @@ def send_message(tg_bot_token, tg_chat_id, text, dry_run=False):
     return False
 
 
-def format_telegram_message(data, max_length=4000):
+def format_telegram_message(data, max_length=4000, offline_items=None):
     def build_section_text(title, items, formatter):
         bold_title = f"**{title.lstrip('# ').strip()}**"
         lines = [bold_title]
@@ -66,6 +66,8 @@ def format_telegram_message(data, max_length=4000):
 
     if data.get("livetv"):
         sections.append(build_section_text("📡 Neue Live-TV-Kanäle", data["livetv"], lambda c: f"- {c['Name']}"))
+
+    # Offline-Liste wird NICHT in Nachrichten gepostet.
 
     full_text = "**🚀 Neue Medien in SurkFlix 🚀**\n\n" + "\n\n".join(sections)
 
@@ -128,7 +130,7 @@ def format_telegram_message(data, max_length=4000):
     return messages
 
 
-def send_telegram_message(tg_bot_token, tg_chat_id, data, unfiltered_data, *, dry_run=False, save_sent_ids=True):
+def send_telegram_message(tg_bot_token, tg_chat_id, data, unfiltered_data, *, dry_run=False, save_sent_ids=True, offline_items=None):
     """
     Formatiert die Daten und sendet sie als eine oder mehrere Telegram-Nachrichten.
     Speichert die IDs der gesendeten Medien, um Duplikate zu vermeiden.
@@ -145,7 +147,7 @@ def send_telegram_message(tg_bot_token, tg_chat_id, data, unfiltered_data, *, dr
     tg_logger.info("Start - Sende TG Message mit Jellyfin Data")
 
     # Telegram message formatieren
-    messages = format_telegram_message(data)
+    messages = format_telegram_message(data, offline_items=offline_items)
     
     all_sent_successfully = True
     # Einzelne Nachrichten nacheinander senden

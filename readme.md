@@ -7,8 +7,9 @@ Dieses Skript verarbeitet eine M3U-Datei, die Streams, Filme und Serien enthält
 ## Was macht das Skript?
 
 - Liest eine M3U-Datei mit Einträgen für Filme, Serien und andere Streams.
-- Für jeden Eintrag wird ein Verzeichnis mit einem sicheren Namen erstellt.
-- In diesem Verzeichnis wird eine `.strm`-Datei mit dem entsprechenden Stream-URL abgelegt.
+- Prüft, ob Video-Links tatsächlich herunterladbar/erreichbar sind (Minimal-Download, keine HTML-Fehlseiten).
+- Nicht erreichbare Einträge werden protokolliert und in `tmp/offline.json` gesammelt.
+- Für gültige Einträge wird ein Verzeichnis mit einem sicheren Namen erstellt und eine `.strm`-Datei mit dem Stream-URL abgelegt.
 - Bestehende `.strm`-Dateien werden nur aktualisiert, wenn sich der Stream-URL ändert.
 
 ---
@@ -43,6 +44,8 @@ chmod +x m3u_script.sh
 
 Das Shellscript prüft, ob ein virtuelles Environment (`venv`) existiert. Falls nicht, wird es erstellt, die Abhängigkeiten aus `requirements.txt` installiert und danach das Script gestartet.
 
+Hinweis: Der Ordner `tmp/` wird zu Beginn eines Laufs geleert. Die Datei `tmp/offline.json` (nicht erreichbare Titel) wird pro Lauf neu erzeugt.
+
 ---
 
 ## Logging
@@ -54,6 +57,16 @@ logs/2025-07-10_15-30-00_m3u_log.log
 ```
 
 - Es werden maximal 10 Logdateien behalten, ältere werden gelöscht.
+
+Zusätzlich werden Offline-Einträge in `tmp/offline.json` mit Grund gespeichert (z. B. `GET status 404`, `GET html-or-empty`).
+
+---
+
+## Performance & Download-Prüfung
+
+- URL-Checks nutzen eine gemeinsame HTTP-Session mit Connection-Pooling und Retries.
+- Vor dem Erstellen von `.strm`-Dateien wird per Minimal-Download verifiziert, dass echte Mediabytes geliefert werden (keine HTML-Fehlerseite).
+- Parallele Prüfungen: Standardmäßig 30 Threads. Für sehr viele URLs oder hohe Latenz können 32–64 sinnvoll sein; bei strengen Rate-Limits eher 12–20.
 
 ---
 
@@ -98,6 +111,12 @@ chmod +x tg_bot_script.sh
 - Snapshot-Datei: `tg_bot/tmp/jellyfin_snapshot.json`
 - Bei jedem Lauf werden alle Jellyfin-Items (Filme, Serien, Episoden) geladen und mit dem Snapshot verglichen.
 - Resultat: Nur neue Filme/Serien werden gemeldet. Serien werden nicht als „neu“ gemeldet, wenn nur neue Staffeln/Episoden hinzugekommen sind; neue Episoden werden gruppiert gemeldet (z. B. `S02, E01–E03`).
+
+### Offline-Unterdrückung (aus M3U-Lauf)
+
+- Der Bot liest optional `tmp/offline.json` aus der Projektwurzel.
+- Titel, die dort als „offline“ stehen, werden NICHT als neu in Telegram gemeldet (sie existierten bereits, sind aber aktuell inaktiv/offline).
+- Die Offline-Liste selbst wird NICHT gepostet.
 
 ### Ausgabe/Logging (tg_bot)
 

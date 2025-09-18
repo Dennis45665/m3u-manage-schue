@@ -2,6 +2,20 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 
+## 0.3.0 — 2025-09-18
+
+- Download-Erkennung: `src/url_check.py` grundlegend optimiert
+  - Gemeinsame HTTP-Session mit Connection-Pooling und Retries
+  - Schnellere Negativ-Heuristik für HLS/DASH/Manifeste
+  - Validierung per Minimal-Download (Bytes prüfen, HTML-Fehlseiten ausschließen)
+  - Thread-sicheres Caching der Ergebnisse (inkl. Grund)
+  - Neue API: `is_url_downloadable_with_reason(url) -> (ok, reason)`
+- Parallelität: URL-Checks in Filmen/Serien auf 30 Threads erhöht
+- Offline-Tracking: Alle nicht downloadbaren Titel werden in `tmp/offline.json` gesammelt (Titel, URL, Typ, Grund)
+- Hauptlauf: Am Ende wird `tmp/offline.json` geschrieben
+- Telegram-Bot: Unterdrückt „neue“ Titel, die in `tmp/offline.json` stehen; Offline-Liste wird NICHT gepostet
+- Serien-Offlines: Serienname wird sauber ohne Sxx/Eyy gespeichert für zuverlässigen Abgleich
+
 ## 0.2.0 — 2025-08-27
 
 - tg_bot: Zeitfenster entfernt – vollständiger Vergleich gegen letzten Snapshot (kein `MinDateCreated`).

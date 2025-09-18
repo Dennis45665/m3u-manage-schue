@@ -4,6 +4,8 @@ from .src.get_jellyfin_data import get_jellyfin_data
 from .src.send_telegram_message import send_telegram_message
 from .src.state import load_snapshot, save_snapshot, compute_new_items
 from .src.filter_data import group_episodes_by_series_and_season
+from pathlib import Path
+import json
 
 def main():
     """
@@ -56,6 +58,57 @@ def main():
     # Änderung: Episoden gruppieren für schönere Ausgabe (Sxx, Eyy–Ezz)
     if new_data.get("episodes"):
         new_data["episodes"] = group_episodes_by_series_and_season(new_data["episodes"])
+
+    # Offline-Items aus m3u-Runner laden (tmp/offline.json im Projektroot)
+    try:
+        project_root = Path(__file__).resolve().parents[1]
+        offline_path = project_root / "tmp" / "offline.json"
+        if offline_path.exists():
+            offline_items = json.loads(offline_path.read_text(encoding="utf-8"))
+        else:
+            offline_items = []
+    except Exception:
+        offline_items = []
+
+    # Unterdrücke "neue" Titel, die in der Offline-Liste stehen
+    import re
+    def _norm(s: str) -> str:
+        return re.sub(r"[^a-z0-9]+", "", (s or "").lower())
+
+    offline_movies = set()
+    offline_series = set()
+    for it in offline_items:
+        kind = (it.get("kind") or "").lower()
+        if kind == "movie":
+            title = it.get("title") or it.get("name") or ""
+            offline_movies.add(_norm(title))
+        elif kind == "series":
+            # Bevorzugt 'series_name' (neu); fallback: Titel ohne Sxx Exx
+            sname = it.get("series_name") or it.get("title") or ""
+            # Fallback-Strip Sxx Exx
+            sname = re.sub(r"\sS\d+\sE\d+.*$", "", sname, flags=re.IGNORECASE).strip()
+            offline_series.add(_norm(sname))
+
+    if new_data.get("movies"):
+        before = len(new_data["movies"])
+        new_data["movies"] = [m for m in new_data["movies"] if _norm(m.get("Name", "")) not in offline_movies]
+        dropped = before - len(new_data["movies"])
+        if dropped:
+            tg_logger.info(f"Unterdrücke {dropped} neue Filme, da in Offline-Liste.")
+
+    if new_data.get("series"):
+        before = len(new_data["series"])
+        new_data["series"] = [s for s in new_data["series"] if _norm(s.get("Name", "")) not in offline_series]
+        dropped = before - len(new_data["series"])
+        if dropped:
+            tg_logger.info(f"Unterdrücke {dropped} neue Serien, da in Offline-Liste.")
+
+    if new_data.get("episodes"):
+        before = len(new_data["episodes"])
+        new_data["episodes"] = [e for e in new_data["episodes"] if _norm(e.get("SeriesName", "")) not in offline_series]
+        dropped = before - len(new_data["episodes"])
+        if dropped:
+            tg_logger.info(f"Unterdrücke {dropped} neue Episoden, da zu Serien in Offline-Liste.")
 
     if any(new_data.get(k) for k in ("movies", "series", "episodes")):
         tg_logger.info("Neue Inhalte gefunden – bereite Versand vor…")
