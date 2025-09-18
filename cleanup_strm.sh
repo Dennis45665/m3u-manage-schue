@@ -21,5 +21,6 @@ else
 fi
 
 echo "Starte Cleanup .strm-Ordner ..."
-exec "$VENV_PYTHON" "$SCRIPT"
-
+# Stelle sicher, dass das Projekt-Root im PYTHONPATH ist und starte als Modul
+export PYTHONPATH="$PROJECT_DIR${PYTHONPATH:+:$PYTHONPATH}"
+exec "$VENV_PYTHON" -m src.cleanup_strm_folders
