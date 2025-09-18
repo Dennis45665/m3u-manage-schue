@@ -1,10 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
 # 1. Projektordner herausfinden (Ordner, in dem das Script liegt)
 # $0 = Pfad zum Script, readlink -f macht daraus den absoluten Pfad,
-# dirname entfernt die Dateiname, übrig bleibt nur der Ordner
+# dirname entfernt den Dateinamen, übrig bleibt nur der Ordner
 PROJECT_DIR="$(dirname "$(readlink -f "$0")")"
-
 echo "Projektordner: $PROJECT_DIR"
 
 # 2. Pfad zum virtuellen Environment im Projektordner
@@ -38,4 +38,5 @@ fi
 
 # 7. Python-Skript mit venv-Python ausführen
 echo "Starte M3U-Skript ..."
-"$VENV_PYTHON" "$SCRIPT"
+exec "$VENV_PYTHON" "$SCRIPT"
+

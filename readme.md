@@ -46,6 +46,28 @@ Das Shellscript prüft, ob ein virtuelles Environment (`venv`) existiert. Falls 
 
 Hinweis: Der Ordner `tmp/` wird zu Beginn eines Laufs geleert. Die Datei `tmp/offline.json` (nicht erreichbare Titel) wird pro Lauf neu erzeugt.
 
+### Cronjob
+
+Du kannst das Skript direkt als ausführbare Datei in Cron verwenden:
+
+1) Pfad prüfen und Ausführbarkeit setzen:
+
+```bash
+which python3   # sollte /usr/bin/python3 o.ä. sein
+chmod +x /pfad/zu/deinem/projekt/m3u_script.sh
+```
+
+2) Cron-Eintrag anlegen (z. B. alle 2 Stunden):
+
+```cron
+0 */2 * * * /pfad/zu/deinem/projekt/m3u_script.sh >> /var/log/m3u-manage.log 2>&1
+```
+
+Hinweise für Cron:
+- Das Skript ermittelt sein Projektverzeichnis selbst (robust bei Cron).
+- Es nutzt `venv/bin/python`; falls kein venv existiert, wird es automatisch erstellt und `requirements.txt` installiert.
+- Ausgabe geht ins angegebene Log (`/var/log/m3u-manage.log`) und zusätzlich in `logs/*_m3u_log.log` im Projekt.
+
 ---
 
 ## Logging
