@@ -6,6 +6,8 @@ set -euo pipefail
 # dirname entfernt den Dateinamen, übrig bleibt nur der Ordner
 PROJECT_DIR="$(dirname "$(readlink -f "$0")")"
 echo "Projektordner: $PROJECT_DIR"
+cd "$PROJECT_DIR"
+export PYTHONPATH="$PROJECT_DIR${PYTHONPATH:+:$PYTHONPATH}"
 
 # 2. Pfad zum virtuellen Environment im Projektordner
 VENV_DIR="$PROJECT_DIR/venv"
@@ -39,4 +41,3 @@ fi
 # 7. Python-Skript mit venv-Python ausführen
 echo "Starte M3U-Skript ..."
 exec "$VENV_PYTHON" "$SCRIPT"
-
